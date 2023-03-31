@@ -1,6 +1,7 @@
 import { type NextPage } from "next";
 import Image from "next/image";
 import Head from "next/head";
+import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
 
 import { api } from "npm/utils/api";
@@ -61,6 +62,7 @@ const AuthShowcase: React.FC = () => {
               >
                 Toast Test
               </button>
+              <Link href="/games">games</Link>
             </div>
           </div>
         )}
