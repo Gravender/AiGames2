@@ -1,14 +1,16 @@
 import { type NextPage } from "next";
 import Image from "next/image";
 import Head from "next/head";
-import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
 
 import { api } from "npm/utils/api";
+import { LoadingPage } from "npm/components/loading";
 
 const Home: NextPage = () => {
-  const hello = api.example.hello.useQuery({ text: "from tRPC" });
-
+  const { data: hello, isLoading } = api.example.hello.useQuery({
+    text: "from tRPC",
+  });
+  if (isLoading) return <LoadingPage />;
   return (
     <>
       <Head>
@@ -20,7 +22,7 @@ const Home: NextPage = () => {
         <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
           <div className="flex flex-col items-center gap-2">
             <p className="text-2xl text-white">
-              {hello.data ? hello.data.greeting : "Loading tRPC query..."}
+              {hello ? hello.greeting : "Loading tRPC query..."}
             </p>
             <AuthShowcase />
           </div>
