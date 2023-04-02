@@ -1,67 +1,53 @@
 import { type NextPage } from "next";
 import { useState } from "react";
+import { tictactoe as ticTac, type State } from "lib/game/tictactoe";
+import { minmnax } from "lib/algorithms/minmax";
 import Link from "next/link";
 const TicTacToe: NextPage = () => {
-  const [board, setBoard] = useState<>([
-    ["", "", ""],
-    ["", "", ""],
-    ["", "", ""],
-  ]);
-  const [player, setPlayer] = useState<"X" | "O">("X");
-  const [winner, setWinner] = useState<string | null>(null);
+  const [game, setGame] = useState<State>(() => ticTac());
+  const [board, setBoard] = useState<string[]>(game.board);
+  const [player, setPlayer] = useState<string>(game.player);
+  const [winner, setWinner] = useState<string>(game.winner);
+  const [isAi, setIsAi] = useState<boolean>(false);
 
-  const checkWinner = () => {
-    // Check rows
-    for (let i = 0; i < 3; i++) {
-      if (
-        board[i][0] &&
-        board[i][0] === board[i][1] &&
-        board[i][0] === board[i][2]
-      ) {
-        setWinner(board[i][0]);
-        return;
-      }
-    }
-    // Check columns
-    for (let i = 0; i < 3; i++) {
-      if (
-        board[0][i] &&
-        board[0][i] === board[1][i] &&
-        board[0][i] === board[2][i]
-      ) {
-        setWinner(board[0][i]);
-        return;
-      }
-    }
-    // Check diagonals
-    if (
-      board[0][0] &&
-      board[0][0] === board[1][1] &&
-      board[0][0] === board[2][2]
-    ) {
-      setWinner(board[0][0]);
-      return;
-    } else if (
-      board[0][2] &&
-      board[0][2] === board[1][1] &&
-      board[0][2] === board[2][0]
-    ) {
-      setWinner(board[0][2]);
-      return;
+  const handleReset = () => {
+    const newGame = ticTac();
+    setGame(newGame);
+    setBoard(newGame.board);
+    setPlayer(newGame.player);
+    setWinner(newGame.checkWinner());
+  };
+
+  const handleMove = (index: number) => {
+    const newGame = { ...game };
+    newGame.makeMove(index);
+    setGame(newGame);
+    setBoard(newGame.board);
+    setPlayer(newGame.player);
+    setWinner(newGame.checkWinner());
+  };
+
+  const handleAIMove = (index: number) => {
+    const newGame = { ...game };
+    newGame.makeMove(index);
+    if (newGame.checkWinner() === "") {
+      const aiMove = minmnax(newGame, 6);
+      newGame.makeMove(aiMove);
+      setGame(newGame);
+      setBoard(newGame.board);
+      setPlayer(newGame.player);
+      setWinner(newGame.checkWinner());
     } else {
-      setWinner(null);
+      setWinner(newGame.checkWinner());
     }
   };
 
-  const handleClick = (row: number, col: number) => {
-    if (board[row][col] || winner) return;
-
-    const newBoard = [...board];
-    newBoard[row][col] = player;
-    setBoard(newBoard);
-
-    checkWinner();
-    setPlayer(player === "X" ? "O" : "X");
+  const handleSquareClick = (index: number) => {
+    if (isAi) {
+      handleAIMove(index);
+    } else {
+      handleMove(index);
+    }
   };
   return (
     <>
@@ -73,20 +59,14 @@ const TicTacToe: NextPage = () => {
               <Link href="/games">Games</Link>
             </div>
             <div className="flex flex-col items-center gap-2">
-              {winner ? ( // If there is a winner
+              {winner ? (
                 <div className="flex flex-col items-center gap-2">
-                  <div className="text-4xl font-bold">{winner} Wins!</div>
+                  <div className="text-4xl font-bold">
+                    {winner === "Draw" ? winner : `${winner} Wins!`}
+                  </div>
                   <button
                     className="rounded-md bg-slate-500 px-4 py-2 text-white"
-                    onClick={() => {
-                      setBoard([
-                        ["", "", ""],
-                        ["", "", ""],
-                        ["", "", ""],
-                      ]);
-                      setPlayer("X");
-                      setWinner(null);
-                    }}
+                    onClick={handleReset}
                   >
                     Play Again
                   </button>
@@ -95,21 +75,21 @@ const TicTacToe: NextPage = () => {
                 <div className="text-4xl font-bold">{`${player}'s Turn`}</div>
               )}
             </div>
-            <div className="grid h-80 w-80 grid-cols-3 flex-col gap-2 rounded-md bg-slate-400 p-2">
+            <button
+              className="w-20 rounded-md bg-slate-500 px-4 py-2 text-white"
+              onClick={() => setIsAi(!isAi)}
+            >
+              {isAi ? "Player" : "AI"}
+            </button>
+            <div className="grid h-80 w-80 grid-cols-3 grid-rows-3 flex-col gap-2 rounded-md bg-slate-400 p-2">
               {board.map((row, i) => {
                 return (
-                  <div className="grid grid-rows-3 gap-2" key={i}>
-                    {row.map((col, j) => {
-                      return (
-                        <div
-                          className="flex items-center justify-center rounded-md bg-slate-500"
-                          key={`${i}-${j}`}
-                          onClick={() => handleClick(i, j)}
-                        >
-                          {col}
-                        </div>
-                      );
-                    })}
+                  <div
+                    className="flex items-center justify-center rounded-md bg-slate-500"
+                    key={i}
+                    onClick={() => handleSquareClick(i)}
+                  >
+                    {row}
                   </div>
                 );
               })}
